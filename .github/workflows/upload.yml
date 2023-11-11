@@ -1,0 +1,43 @@
+name: Upload
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  upload:
+    name: Upload
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.7]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: build submission codes
+        run: |
+          python ./build.py
+      - uses: harupy/push-kaggle-kernel@master
+        env:
+          # Do not leak your credentials.
+          KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+          KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
+        with:
+          # https://github.com/harupy/push-kaggle-kernel/commit/266039f1ade2701a789e2c9b1e6cc360659edeff
+          # {username}/{slug}
+          id: wakamezake/petfinder-sample-pipeline
+          title: petfinder_sample_pipeline
+          code_file: ./build/script.py
+          language: python
+          kernel_type: script
+          # Do not share high-scoring kernels.
+          is_private: false
+          competition_sources: |
+            petfinder-adoption-prediction
+          kernel_sources: |
+            wakamezake/extract-image-features-from-pretrained-nn
